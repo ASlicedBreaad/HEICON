@@ -10,8 +10,9 @@ import time
 heic_folder = "heic_files"
 no_folders = False
 debug_mode = False
+percent_print = 0.25
 step_print = 25
-convert_types = [".jpg", ".png"]
+convert_types = ["jpg", "png"]
 conv_path = "."
 num_procs = 75
 
@@ -39,7 +40,7 @@ def conversion_process(images:list[str],curr_path:str,queue:Queue):
             except Exception as e:
                 print(f"Error converting {os.path.join(curr_path,filename)}:",e)
             else: 
-                new_file = Path(filename).stem + conv_type
+                new_file = Path(filename).stem +'.'+conv_type
                 try: 
                     img.save(f"{os.path.join(curr_path,(new_file))}")
                 except Exception as e:
@@ -59,7 +60,7 @@ def convert_files(curr_path: str, conv_type: str):
     final_type = conv_type.replace('.', "").upper()
     if not no_folders:
         os.makedirs(os.path.join(curr_path,heic_folder), exist_ok=True)
-    print(f"Starting conversion from HEIC to {final_type}")
+    print(f"Starting conversion from HEIC to {conv_type.upper()}")
     images = filter_images(os.listdir(curr_path))   
     try:
         dic = {}
@@ -101,8 +102,8 @@ if __name__ == "__main__":
         "--nr", help="Disables the creation of the folder containing the HEIC images after conversion", action="store_true")
     parser.add_argument(
         "--debug", help="For debugging the app", action="store_true")
-    parser.add_argument("--type", default=".jpg",
-                        help="Defines the type to convert to (Default: .jpg)", choices=[convert_types])
+    parser.add_argument("--type", default="jpg",
+                        help="Defines the type to convert to (Default: jpg)", choices=convert_types)
     parser.add_argument("--path", default=".",
                         help="Specify a path to convert files at")
     parser.add_argument("--np",default=75,help="Specify the number of processes to use in multiprocessing",type=int)
