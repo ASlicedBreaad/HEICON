@@ -19,12 +19,12 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-python heic-to-jpg.py
+python heic_to_jpg.py
 ```
 
 To see the list of available commands, do: 
 ```bash
-python heic-to-jpg.py --help
+python heic_to_jpg.py --help
 ```
 
 To Debug or test the app, a sample image is provided in `debug_resources`
@@ -34,7 +34,7 @@ To run a debug, make sure the PATH provided or if none is provided, the folder w
 
 To Debug, simply enter
 ```bash
-python heic-to-jpg.py --debug
+python heic_to_jpg.py --debug
 ```
 
 ## To-do
