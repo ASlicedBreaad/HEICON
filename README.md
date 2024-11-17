@@ -19,7 +19,7 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-python heic_to_jpg.py
+python heic_to_jpg.py --path <path_of_file_or_folder>
 ```
 
 To see the list of available commands, do: 
@@ -29,7 +29,7 @@ python heic_to_jpg.py --help
 
 To Debug or test the app, a sample image is provided in `debug_resources`
 
-To run a debug, make sure the PATH provided or if none is provided, the folder where the program is being executed contains the `debug_resources/sample1.heic` file
+To run a debug, make sure the PATH(S) provided or if none is provided, the folder where the program is being executed contains the `debug_resources/sample1.heic` file
 
 
 To Debug, simply enter
