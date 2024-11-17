@@ -2,3 +2,4 @@
 *.jpg
 .venv/
 !sample1.heic
+pysimplegui_key.txt
