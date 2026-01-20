@@ -1,6 +1,5 @@
-#!/usr/bin/python3.10
 from functools import reduce
-from multiprocessing import Process, Queue, Value
+from multiprocessing import Process, Queue, Value, freeze_support, cpu_count
 import os
 import argparse
 import shutil
@@ -16,8 +15,8 @@ percent_print = 0.25
 step_print = 25
 convert_types = ["jpg", "png"]
 conv_path = "."
-num_procs = 75
-count_debug_files = 2000
+num_procs = 4
+count_debug_files = 1000
 
 
 def get_file_count(curr_paths: list[str]) -> int:
@@ -168,6 +167,7 @@ def path_check(paths_to_check: list[str]):
     return [areAllPathsWrong,checked_paths_list]
 
 if __name__ == "__main__":
+    freeze_support()
     parser = argparse.ArgumentParser(prog="HEIC-to-JPG",
                                      description="Convert those pesky HEIC images to JPG or other formats")
     parser.add_argument(
@@ -178,7 +178,7 @@ if __name__ == "__main__":
                         help="Defines the type to convert to (Default: jpg)", choices=convert_types)
     parser.add_argument("--path", default=".", nargs='+',
                         help="Specify one or multiple paths of either folders or files to convert")
-    parser.add_argument("--np",default=75,help="Specify the number of processes to use in multiprocessing (Default: 75)",type=int)
+    parser.add_argument("--np",default=cpu_count()/2,help="Specify the number of processes to use in multiprocessing (Default: cpu cores/2)",type=int)
     args = parser.parse_args()
 
     no_folders = args.nr

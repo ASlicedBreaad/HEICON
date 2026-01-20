@@ -3,3 +3,8 @@
 .venv/
 !sample1.heic
 pysimplegui_key.txt
+build/
+windows/
+linux/
+dist/
+*.spec
