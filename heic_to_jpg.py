@@ -16,7 +16,7 @@ step_print = 25
 convert_types = ["jpg", "png"]
 conv_path = "."
 num_procs = 75
-count_debug_files = 250
+count_debug_files = 200
 
 
 def get_file_count(curr_paths: list[str]) -> int:
@@ -38,7 +38,7 @@ def print_conversion_result(num_files_to_convert: int, num_files_converted: int,
         print(
             f"Converted {num_files_converted} files - {subs_file} remaining")
 
-def conversion_process(images:list[str],curr_path:str,queue:Queue,type:str):
+def conversion_process(images:list[str],curr_path:str,queue:Queue,type:str,no_folders: bool):
     num_files_converted = 0
     for filename in images:
             try:
@@ -81,7 +81,7 @@ def convert_files_for_path(curr_path:str, type:str,step_print:int):
                     temp.append(elem)
             dic[i] = temp.copy()
         for i in range(num_procs):
-            proc = Process(target=conversion_process, args=(dic[i],curr_path,q,type))
+            proc = Process(target=conversion_process, args=(dic[i],curr_path,q,type,no_folders))
             processes.append(proc)
             proc.start()
 
@@ -113,7 +113,7 @@ def convert_files_for_sing_file(curr_file:str, type:str):
 
     if not no_folders:
         os.makedirs(os.path.join(curr_path,heic_folder), exist_ok=True)
-    print(f"Starting conversion from HEIC to {type.upper()}")
+    print(f"Starting single file conversion from HEIC to {type.upper()}")
     image = curr_file if filename.lower().endswith(".heic") else ""  
     if image != "":
         try:
@@ -142,7 +142,6 @@ def convert_files_for_sing_file(curr_file:str, type:str):
 
 def convert_files(curr_paths: list[str], conv_type: str,step_print:int):
     num_files_converted = 0
-    print(f"Paths searched for conversion: {curr_paths}")
     for path in curr_paths:
         if os.path.isfile(path):
             if os.path.basename(path).lower().endswith(".heic"):
@@ -153,6 +152,11 @@ def convert_files(curr_paths: list[str], conv_type: str,step_print:int):
             print(f"{path} is not a directory nor an HEIC file")
     print(f"Converted in total: {num_files_converted} images from HEIC to {conv_type.upper()}")
 
+def path_check(paths_to_check: list[str]):
+    # Adds a True if path doesn't exist, else it's False; it does exist
+    checked_paths_list = list(map((lambda path: [True,path] if os.path.exists(path) else [False,path]),paths_to_check))
+    areAllPathsWrong = all(map((lambda path_item: path_item[0]),checked_paths_list))
+    return [areAllPathsWrong,checked_paths_list]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="HEIC-to-JPG",
@@ -174,10 +178,6 @@ if __name__ == "__main__":
     conv_path = args.path
     num_procs = args.np
 
-        
-    conv_path = [" "] + conv_path
-    checked_paths : str = reduce(lambda acc,path: acc if os.path.exists(path) else acc + " "+path,conv_path).strip()
-
     if debug_mode:
         conv_path = "./debug"
         os.makedirs(conv_path, exist_ok=True)
@@ -188,9 +188,11 @@ if __name__ == "__main__":
         except:
             print("Debug files already present")
 
-    if checked_paths == "" or debug_mode:
+
+    checked_paths = path_check(conv_path)
+
+    if (checked_paths[0]) or conv_path == ["."] or debug_mode:
         num_files_to_convert = get_file_count(conv_path) if not debug_mode else count_debug_files
-        conv_path = conv_path[1:]
         num_procs = num_files_to_convert if num_procs > num_files_to_convert else num_procs
         print(f"Found {num_files_to_convert} files to convert")
         if num_files_to_convert > 0:
@@ -206,4 +208,4 @@ if __name__ == "__main__":
                 convert_files(conv_path, conv_type,step_print)
             print(f"Took {time.time()-time_start} seconds")
     else:
-        print(f"The path(s): \"{checked_paths}\" doesn't or don't exist")
+        print(f"The path(s): \"{list(filter((lambda path: path != None),map((lambda path_item: path_item[1] if not path_item[0] else None),checked_paths[1])))}\" doesn't or don't exist")

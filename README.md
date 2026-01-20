@@ -18,6 +18,7 @@ pip install -r requirements.txt
 
 ## Usage
 
+Make sure that paths that include whitespaces in them are surrounded by " "
 ```bash
 python heic_to_jpg.py --path <path_of_file_or_folder>
 ```
