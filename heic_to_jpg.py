@@ -1,6 +1,6 @@
 #!/usr/bin/python3.10
 from functools import reduce
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Value
 import os
 import argparse
 import shutil
@@ -11,12 +11,13 @@ import time
 heic_folder = "heic_files"
 no_folders = False
 debug_mode = False
+# At what percentage should a progress print be made
 percent_print = 0.25
 step_print = 25
 convert_types = ["jpg", "png"]
 conv_path = "."
 num_procs = 75
-count_debug_files = 200
+count_debug_files = 2000
 
 
 def get_file_count(curr_paths: list[str]) -> int:
@@ -38,7 +39,7 @@ def print_conversion_result(num_files_to_convert: int, num_files_converted: int,
         print(
             f"Converted {num_files_converted} files - {subs_file} remaining")
 
-def conversion_process(images:list[str],curr_path:str,queue:Queue,type:str,no_folders: bool):
+def conversion_process(images:list[str],curr_path:str, type:str,no_folders: bool, progress_count:int):
     num_files_converted = 0
     for filename in images:
             try:
@@ -59,9 +60,8 @@ def conversion_process(images:list[str],curr_path:str,queue:Queue,type:str,no_fo
                                     os.path.join(curr_path,heic_folder))
                     except shutil.Error as e:
                         print(f"Couldn't move {os.path.join(curr_path,filename)} to {os.path.join(curr_path,heic_folder)}:",e)
-                num_files_converted += 1
-    queue.put(num_files_converted)
-
+                with progress_count.get_lock():
+                    progress_count.value += 1
 
 def convert_files_for_path(curr_path:str, type:str,step_print:int):
     num_files_converted = 0
@@ -72,7 +72,6 @@ def convert_files_for_path(curr_path:str, type:str,step_print:int):
     num_files_to_convert = images.__len__()
     try:
         dic = {}
-        q = Queue()
         processes :list[Process] = []
         for i in range(num_procs):
             temp = []
@@ -80,20 +79,30 @@ def convert_files_for_path(curr_path:str, type:str,step_print:int):
                 if id % num_procs == i:
                     temp.append(elem)
             dic[i] = temp.copy()
+        progress_count = Value('i', 0)
         for i in range(num_procs):
-            proc = Process(target=conversion_process, args=(dic[i],curr_path,q,type,no_folders))
+            proc = Process(target=conversion_process, args=(dic[i],curr_path,type,no_folders,progress_count))
             processes.append(proc)
             proc.start()
 
-        for proc in processes:
-            proc.join()
-        
         step_count = 1
-        while not q.empty() :
-            num_files_converted+= q.get_nowait()
+        current_progress_count= 0
+        while True:
+            with progress_count.get_lock():
+                current_progress_count = progress_count.value
+            num_files_converted = current_progress_count
             if num_files_converted >= (step_print*step_count):
                 print_conversion_result(num_files_to_convert,num_files_converted)
                 step_count+=1
+            if current_progress_count >= num_files_to_convert:
+                break   
+            # Small sleep to avoid busy waiting, maybe look into adding a way to have event triggers that make you read the value at X time than each tick 
+            time.sleep(0.1)
+            
+        for proc in processes:
+            proc.join()
+        
+
     except PermissionError as e:
         print("Not enough permissions operate:",e)
     except Exception as e:
